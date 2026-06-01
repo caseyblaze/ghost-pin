@@ -50,4 +50,13 @@ describe('parseCoords', () => {
     expect(parseCoords('(25.0330, 121.5654')).toBeNull();
     expect(parseCoords('25.0330, 121.5654)')).toBeNull();
   });
+
+  it('returns null for bare format without decimals', () => {
+    expect(parseCoords('25, 121')).toBeNull();
+    expect(parseCoords('0, 0')).toBeNull();
+  });
+
+  it('accepts bare format with decimals', () => {
+    expect(parseCoords('25.0, 121.0')).toEqual({ lat: 25, lng: 121 });
+  });
 });

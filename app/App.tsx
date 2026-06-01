@@ -9,6 +9,7 @@ import { PRESETS } from './presets';
 import { setLocation, resetLocation, getStatus } from './src/api';
 
 const BANNER_HIDDEN_Y = -60;
+const BANNER_TIMEOUT_MS = 4000;
 
 type BannerProps = {
   coords: Coords;
@@ -46,7 +47,7 @@ function ClipboardBanner({ coords, onApply, onDismiss }: BannerProps) {
       useNativeDriver: true,
     });
     animRef.current.start();
-    const timer = setTimeout(() => hide(onDismissRef.current), 4000);
+    const timer = setTimeout(() => hide(onDismissRef.current), BANNER_TIMEOUT_MS);
     return () => {
       clearTimeout(timer);
       animRef.current?.stop();
@@ -118,8 +119,8 @@ export default function App() {
 
   function handleApply() {
     if (!pendingCoords) return;
-    setLat(String(pendingCoords.lat));
-    setLng(String(pendingCoords.lng));
+    setLat(pendingCoords.lat.toFixed(4));
+    setLng(pendingCoords.lng.toFixed(4));
     setPendingCoords(null);
   }
 
