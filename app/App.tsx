@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated, AppState, SafeAreaView, ScrollView, View,
   Text, TextInput, Pressable, StyleSheet,
@@ -28,7 +28,7 @@ function ClipboardBanner({ coords, onApply, onDismiss }: BannerProps) {
     onDismissRef.current = onDismiss;
   }, [onApply, onDismiss]);
 
-  function hide(callback: () => void) {
+  const hide = useCallback((callback: () => void) => {
     if (isHiding.current) return;
     isHiding.current = true;
     animRef.current = Animated.timing(translateY, {
@@ -37,7 +37,7 @@ function ClipboardBanner({ coords, onApply, onDismiss }: BannerProps) {
       useNativeDriver: true,
     });
     animRef.current.start(callback);
-  }
+  }, []);
 
   useEffect(() => {
     animRef.current = Animated.timing(translateY, {
@@ -85,6 +85,19 @@ export default function App() {
 
   useEffect(() => { refreshStatus(); }, []);
 
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', async (nextState) => {
+      if (nextState !== 'active') return;
+      const text = await Clipboard.getStringAsync();
+      if (!text || text === lastClipboardRef.current) return;
+      const coords = parseCoords(text);
+      if (!coords) return;
+      lastClipboardRef.current = text;
+      setPendingCoords(coords);
+    });
+    return () => sub.remove();
+  }, []);
+
   async function onSet() {
     setBusy(true);
     const r = await setLocation(Number(lat), Number(lng));
@@ -99,6 +112,18 @@ export default function App() {
     setBusy(false);
   }
 
+  function handleApply() {
+    if (!pendingCoords) return;
+    setLat(String(pendingCoords.lat));
+    setLng(String(pendingCoords.lng));
+    lastClipboardRef.current = null;
+    setPendingCoords(null);
+  }
+
+  function handleDismiss() {
+    setPendingCoords(null);
+  }
+
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -106,8 +131,8 @@ export default function App() {
         {pendingCoords && (
           <ClipboardBanner
             coords={pendingCoords}
-            onApply={() => {}}
-            onDismiss={() => {}}
+            onApply={handleApply}
+            onDismiss={handleDismiss}
           />
         )}
         <Text style={styles.status}>{status}</Text>
