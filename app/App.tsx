@@ -8,6 +8,8 @@ import { parseCoords, type Coords } from './src/parseCoords';
 import { PRESETS } from './presets';
 import { setLocation, resetLocation, getStatus } from './src/api';
 
+const BANNER_HIDDEN_Y = -60;
+
 type BannerProps = {
   coords: Coords;
   onApply: () => void;
@@ -15,24 +17,38 @@ type BannerProps = {
 };
 
 function ClipboardBanner({ coords, onApply, onDismiss }: BannerProps) {
-  const translateY = useRef(new Animated.Value(-60)).current;
+  const translateY = useRef(new Animated.Value(BANNER_HIDDEN_Y)).current;
+  const isHiding = useRef(false);
+  const onDismissRef = useRef(onDismiss);
+  const animRef = useRef<Animated.CompositeAnimation | null>(null);
+
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
 
   function hide(callback: () => void) {
-    Animated.timing(translateY, {
-      toValue: -60,
+    if (isHiding.current) return;
+    isHiding.current = true;
+    animRef.current = Animated.timing(translateY, {
+      toValue: BANNER_HIDDEN_Y,
       duration: 150,
       useNativeDriver: true,
-    }).start(() => callback());
+    });
+    animRef.current.start(callback);
   }
 
   useEffect(() => {
-    Animated.timing(translateY, {
+    animRef.current = Animated.timing(translateY, {
       toValue: 0,
       duration: 200,
       useNativeDriver: true,
-    }).start();
-    const timer = setTimeout(() => hide(onDismiss), 4000);
-    return () => clearTimeout(timer);
+    });
+    animRef.current.start();
+    const timer = setTimeout(() => hide(onDismissRef.current), 4000);
+    return () => {
+      clearTimeout(timer);
+      animRef.current?.stop();
+    };
   }, []);
 
   return (
@@ -56,6 +72,8 @@ export default function App() {
   const [lng, setLng] = useState('121.5654');
   const [status, setStatus] = useState('檢查中…');
   const [busy, setBusy] = useState(false);
+  const [pendingCoords, setPendingCoords] = useState<Coords | null>(null);
+  const lastClipboardRef = useRef<string | null>(null);
 
   async function refreshStatus() {
     const r = await getStatus();
