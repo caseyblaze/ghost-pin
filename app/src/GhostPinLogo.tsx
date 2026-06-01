@@ -19,12 +19,12 @@ export function GhostPinLogo() {
 }
 
 const styles = StyleSheet.create({
-  container: { marginBottom: 4, alignSelf: 'flex-start' },
+  container: { alignSelf: 'flex-start' },
   textRow: { flexDirection: 'row' },
   text: {
     fontSize: 28,
     fontWeight: '800',
-    fontFamily: Platform.select({ ios: 'Courier-Bold', default: 'monospace' }),
+    fontFamily: Platform.select({ ios: 'Courier New', android: 'monospace' }),
     letterSpacing: 2,
   },
   ghost: { color: '#ffffff' },

@@ -31,11 +31,11 @@ export function resetLocation(): Promise<ApiResult> {
   return post('/reset');
 }
 
-export async function getStatus(): Promise<ApiResult> {
+async function get(path: string): Promise<ApiResult> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const res = await fetch(`${SERVER_BASE_URL}/status`, { signal: controller.signal });
+    const res = await fetch(`${SERVER_BASE_URL}${path}`, { signal: controller.signal });
     clearTimeout(timer);
     return (await res.json()) as ApiResult;
   } catch (e) {
@@ -43,4 +43,8 @@ export async function getStatus(): Promise<ApiResult> {
     const isTimeout = e instanceof Error && e.name === 'AbortError';
     return { ok: false, message: isTimeout ? '連線逾時' : `連線失敗：${String(e)}` };
   }
+}
+
+export function getStatus(): Promise<ApiResult> {
+  return get('/status');
 }

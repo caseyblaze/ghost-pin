@@ -111,6 +111,7 @@ export default function App() {
   useEffect(() => {
     const sub = AppState.addEventListener('change', async (nextState) => {
       if (nextState !== 'active') return;
+      refreshStatus();
       try {
         const text = await Clipboard.getStringAsync();
         if (!text || text === lastClipboardRef.current) return;
@@ -126,10 +127,17 @@ export default function App() {
   }, []);
 
   async function onSet() {
+    const latNum = Number(lat);
+    const lngNum = Number(lng);
+    if (!lat.trim() || !lng.trim() || !isFinite(latNum) || !isFinite(lngNum)) {
+      setStatus('請輸入有效的座標');
+      setStatusType('error');
+      return;
+    }
     setBusy(true);
     setStatus('設定中…');
     setStatusType('info');
-    const r = await setLocation(Number(lat), Number(lng));
+    const r = await setLocation(latNum, lngNum);
     setStatus(r.ok ? `已設定 ${lat}, ${lng}` : `失敗：${r.message}`);
     setStatusType(r.ok ? 'success' : 'error');
     setBusy(false);
