@@ -4,20 +4,20 @@ const { validateCoords } = require('./validate');
 function createRoutes(pmd) {
   const router = express.Router();
 
-  router.post('/location', async (req, res) => {
+  router.post('/location', (req, res) => {
     const { lat, lng } = req.body || {};
     const v = validateCoords(lat, lng);
     if (!v.ok) {
       res.status(400).json({ ok: false, message: v.message });
       return;
     }
-    const result = await pmd.setLocation(v.lat, v.lng);
-    res.status(result.ok ? 200 : 500).json(result);
+    res.json({ ok: true, message: 'ok' });
+    pmd.setLocation(v.lat, v.lng);
   });
 
-  router.post('/reset', async (req, res) => {
-    const result = await pmd.clearLocation();
-    res.status(result.ok ? 200 : 500).json(result);
+  router.post('/reset', (_req, res) => {
+    res.json({ ok: true, message: 'ok' });
+    pmd.clearLocation();
   });
 
   router.get('/status', async (req, res) => {

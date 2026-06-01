@@ -28,14 +28,14 @@ describe('routes', () => {
     expect(pmd.setLocation).not.toHaveBeenCalled();
   });
 
-  test('POST /location returns 500 when pmd fails', async () => {
+  test('POST /location always returns ok immediately regardless of pmd result', async () => {
     const pmd = {
       setLocation: jest.fn().mockResolvedValue({ ok: false, message: 'Tunnel not found' }),
     };
     const res = await request(makeApp(pmd)).post('/location').send({ lat: 0, lng: 0 });
-    expect(res.status).toBe(500);
-    expect(res.body.ok).toBe(false);
-    expect(res.body.message).toContain('Tunnel not found');
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(pmd.setLocation).toHaveBeenCalledWith(0, 0);
   });
 
   test('POST /reset calls pmd.clearLocation', async () => {
