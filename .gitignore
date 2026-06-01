@@ -1,3 +1,6 @@
 .superpowers/
 node_modules/
 .DS_Store
+
+# local config (contains LAN IP — use app/src/config.example.ts as template)
+app/src/config.ts
