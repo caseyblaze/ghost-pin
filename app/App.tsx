@@ -88,12 +88,16 @@ export default function App() {
   useEffect(() => {
     const sub = AppState.addEventListener('change', async (nextState) => {
       if (nextState !== 'active') return;
-      const text = await Clipboard.getStringAsync();
-      if (!text || text === lastClipboardRef.current) return;
-      const coords = parseCoords(text);
-      if (!coords) return;
-      lastClipboardRef.current = text;
-      setPendingCoords(coords);
+      try {
+        const text = await Clipboard.getStringAsync();
+        if (!text || text === lastClipboardRef.current) return;
+        const coords = parseCoords(text);
+        if (!coords) return;
+        lastClipboardRef.current = text;
+        setPendingCoords(coords);
+      } catch {
+        // clipboard unavailable (e.g. Android security restrictions)
+      }
     });
     return () => sub.remove();
   }, []);
@@ -116,7 +120,6 @@ export default function App() {
     if (!pendingCoords) return;
     setLat(String(pendingCoords.lat));
     setLng(String(pendingCoords.lng));
-    lastClipboardRef.current = null;
     setPendingCoords(null);
   }
 
@@ -130,6 +133,7 @@ export default function App() {
         <Text style={styles.title}>Ghost-Pin</Text>
         {pendingCoords && (
           <ClipboardBanner
+            key={`${pendingCoords.lat},${pendingCoords.lng}`}
             coords={pendingCoords}
             onApply={handleApply}
             onDismiss={handleDismiss}
