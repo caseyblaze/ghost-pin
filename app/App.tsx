@@ -1,9 +1,55 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  SafeAreaView, ScrollView, View, Text, TextInput, Pressable, StyleSheet,
+  Animated, AppState, SafeAreaView, ScrollView, View,
+  Text, TextInput, Pressable, StyleSheet,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import { parseCoords, type Coords } from './src/parseCoords';
 import { PRESETS } from './presets';
 import { setLocation, resetLocation, getStatus } from './src/api';
+
+type BannerProps = {
+  coords: Coords;
+  onApply: () => void;
+  onDismiss: () => void;
+};
+
+function ClipboardBanner({ coords, onApply, onDismiss }: BannerProps) {
+  const translateY = useRef(new Animated.Value(-60)).current;
+
+  function hide(callback: () => void) {
+    Animated.timing(translateY, {
+      toValue: -60,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => callback());
+  }
+
+  useEffect(() => {
+    Animated.timing(translateY, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+    const timer = setTimeout(() => hide(onDismiss), 4000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <Animated.View style={[styles.banner, { transform: [{ translateY }] }]}>
+      <View style={styles.bannerAccent} />
+      <Text style={styles.bannerText} numberOfLines={1}>
+        📋 {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
+      </Text>
+      <Pressable onPress={() => hide(onApply)}>
+        <Text style={styles.bannerApply}>套用</Text>
+      </Pressable>
+      <Pressable onPress={() => hide(onDismiss)}>
+        <Text style={styles.bannerDismissBtn}>✕</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
 
 export default function App() {
   const [lat, setLat] = useState('25.0330');
@@ -37,6 +83,13 @@ export default function App() {
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Ghost-Pin</Text>
+        {pendingCoords && (
+          <ClipboardBanner
+            coords={pendingCoords}
+            onApply={() => {}}
+            onDismiss={() => {}}
+          />
+        )}
         <Text style={styles.status}>{status}</Text>
 
         <Text style={styles.label}>緯度 (lat)</Text>
@@ -89,4 +142,37 @@ const styles = StyleSheet.create({
   btnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   refresh: { alignItems: 'center', marginTop: 16 },
   refreshText: { color: '#7fd1ff', fontSize: 14 },
+  banner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1a3a5c',
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 8,
+    paddingVertical: 10,
+    paddingRight: 12,
+    gap: 8,
+  },
+  bannerAccent: {
+    width: 4,
+    alignSelf: 'stretch',
+    backgroundColor: '#2563eb',
+    marginRight: 4,
+  },
+  bannerText: {
+    flex: 1,
+    color: '#fff',
+    fontSize: 14,
+  },
+  bannerApply: {
+    color: '#7fd1ff',
+    fontSize: 14,
+    fontWeight: '600',
+    paddingHorizontal: 4,
+  },
+  bannerDismissBtn: {
+    color: '#9aa',
+    fontSize: 16,
+    paddingHorizontal: 4,
+  },
 });
