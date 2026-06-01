@@ -72,10 +72,10 @@ function ClipboardBanner({ coords, onApply, onDismiss }: BannerProps) {
       <Text style={styles.bannerText} numberOfLines={1}>
         📋 {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
       </Text>
-      <Pressable onPress={() => hide(onApplyRef.current)}>
+      <Pressable style={({ pressed }) => pressed && { opacity: 0.6 }} onPress={() => hide(onApplyRef.current)}>
         <Text style={styles.bannerApply}>套用</Text>
       </Pressable>
-      <Pressable onPress={() => hide(onDismissRef.current)}>
+      <Pressable style={({ pressed }) => pressed && { opacity: 0.6 }} onPress={() => hide(onDismissRef.current)}>
         <Text style={styles.bannerDismissBtn}>✕</Text>
       </Pressable>
     </Animated.View>
@@ -177,20 +177,21 @@ export default function App() {
         <Text style={styles.label}>預設地點</Text>
         <View style={styles.presets}>
           {PRESETS.map((p) => (
-            <Pressable key={p.name} style={styles.preset}
+            <Pressable key={p.name}
+              style={({ pressed }) => [styles.preset, pressed && { opacity: 0.6 }]}
               onPress={() => { setLat(String(p.lat)); setLng(String(p.lng)); }}>
               <Text style={styles.presetText}>{p.name}</Text>
             </Pressable>
           ))}
         </View>
 
-        <Pressable style={[styles.btn, styles.primary]} disabled={busy} onPress={onSet}>
+        <Pressable style={({ pressed }) => [styles.btn, styles.primary, pressed && { opacity: 0.6 }]} disabled={busy} onPress={onSet}>
           <Text style={styles.btnText}>設定定位</Text>
         </Pressable>
-        <Pressable style={[styles.btn, styles.secondary]} disabled={busy} onPress={onReset}>
+        <Pressable style={({ pressed }) => [styles.btn, styles.secondary, pressed && { opacity: 0.6 }]} disabled={busy} onPress={onReset}>
           <Text style={styles.btnText}>恢復真實定位</Text>
         </Pressable>
-        <Pressable style={styles.refresh} onPress={refreshStatus}>
+        <Pressable style={({ pressed }) => [styles.refresh, pressed && { opacity: 0.6 }]} onPress={refreshStatus}>
           <Text style={styles.refreshText}>重新檢查狀態</Text>
         </Pressable>
       </ScrollView>
