@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export function GhostPinLogo() {
@@ -19,12 +19,12 @@ export function GhostPinLogo() {
 }
 
 const styles = StyleSheet.create({
-  container: { marginBottom: 4 },
+  container: { marginBottom: 4, alignSelf: 'flex-start' },
   textRow: { flexDirection: 'row' },
   text: {
     fontSize: 28,
     fontWeight: '800',
-    fontFamily: 'monospace',
+    fontFamily: Platform.select({ ios: 'Courier-Bold', default: 'monospace' }),
     letterSpacing: 2,
   },
   ghost: { color: '#ffffff' },
