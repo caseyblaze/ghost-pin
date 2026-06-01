@@ -8,6 +8,18 @@ import { parseCoords, type Coords } from './src/parseCoords';
 import { PRESETS } from './presets';
 import { setLocation, resetLocation, getStatus } from './src/api';
 
+const STATUS_COLORS = {
+  info:    '#7fd1ff',
+  success: '#4ade80',
+  error:   '#f87171',
+} as const;
+
+const STATUS_ICONS = {
+  info:    '',
+  success: '✓ ',
+  error:   '✗ ',
+} as const;
+
 const BANNER_HIDDEN_Y = -60;
 const BANNER_TIMEOUT_MS = 4000;
 
@@ -74,6 +86,7 @@ export default function App() {
   const [lat, setLat] = useState('25.0330');
   const [lng, setLng] = useState('121.5654');
   const [status, setStatus] = useState('檢查中…');
+  const [statusType, setStatusType] = useState<'info' | 'success' | 'error'>('info');
   const [busy, setBusy] = useState(false);
   const [pendingCoords, setPendingCoords] = useState<Coords | null>(null);
   const lastClipboardRef = useRef<string | null>(null);
@@ -140,7 +153,9 @@ export default function App() {
             onDismiss={handleDismiss}
           />
         )}
-        <Text style={styles.status}>{status}</Text>
+        <Text style={[styles.status, { color: STATUS_COLORS[statusType] }]}>
+          {STATUS_ICONS[statusType]}{status}
+        </Text>
 
         <Text style={styles.label}>緯度 (lat)</Text>
         <TextInput style={styles.input} value={lat} onChangeText={setLat}
