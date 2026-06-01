@@ -7,6 +7,7 @@ import * as Clipboard from 'expo-clipboard';
 import { parseCoords, type Coords } from './src/parseCoords';
 import { PRESETS } from './presets';
 import { setLocation, resetLocation, getStatus } from './src/api';
+import { GhostPinLogo } from './src/GhostPinLogo';
 
 const STATUS_COLORS = {
   info:    '#7fd1ff',
@@ -158,7 +159,7 @@ export default function App() {
   return (
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Ghost-Pin</Text>
+        <GhostPinLogo />
         {pendingCoords && (
           <ClipboardBanner
             key={`${pendingCoords.lat},${pendingCoords.lng}`}
@@ -207,7 +208,6 @@ export default function App() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#0f1419' },
   container: { padding: 24, gap: 8 },
-  title: { fontSize: 28, fontWeight: '700', color: '#fff', marginBottom: 4 },
   status: { fontSize: 14, marginBottom: 16 },
   label: { fontSize: 13, color: '#9aa', marginTop: 8 },
   input: {
