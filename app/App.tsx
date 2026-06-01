@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#0f1419' },
   container: { padding: 24, gap: 8 },
   title: { fontSize: 28, fontWeight: '700', color: '#fff', marginBottom: 4 },
-  status: { fontSize: 14, color: '#7fd1ff', marginBottom: 16 },
+  status: { fontSize: 14, marginBottom: 16 },
   label: { fontSize: 13, color: '#9aa', marginTop: 8 },
   input: {
     backgroundColor: '#1c2530', color: '#fff', borderRadius: 8,
