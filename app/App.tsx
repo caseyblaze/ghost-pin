@@ -179,7 +179,8 @@ export default function App() {
           keyboardType="numbers-and-punctuation" />
 
         <Text style={styles.label}>預設地點</Text>
-        <View style={styles.presets}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.presets}>
           {PRESETS.map((p) => (
             <Pressable key={p.name}
               style={({ pressed }) => [styles.preset, pressed && { opacity: 0.6 }]}
@@ -187,7 +188,7 @@ export default function App() {
               <Text style={styles.presetText}>{p.name}</Text>
             </Pressable>
           ))}
-        </View>
+        </ScrollView>
 
         <Pressable style={({ pressed }) => [styles.btn, styles.primary, pressed && { opacity: 0.6 }]} disabled={busy} onPress={onSet}>
           <Text style={styles.btnText}>設定定位</Text>
@@ -213,7 +214,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1c2530', color: '#fff', borderRadius: 8,
     paddingHorizontal: 12, paddingVertical: 10, fontSize: 16,
   },
-  presets: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8 },
+  presets: { flexDirection: 'row', gap: 8, paddingVertical: 8 },
   preset: { backgroundColor: '#26323f', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 8 },
   presetText: { color: '#cfe', fontSize: 14 },
   btn: { borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 12 },
