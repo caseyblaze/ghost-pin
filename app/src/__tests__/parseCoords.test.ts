@@ -59,4 +59,9 @@ describe('parseCoords', () => {
   it('accepts bare format with decimals', () => {
     expect(parseCoords('25.0, 121.0')).toEqual({ lat: 25, lng: 121 });
   });
+
+  it('preserves 7 decimal places', () => {
+    expect(parseCoords('25.1234567, 121.9876543')).toEqual({ lat: 25.1234567, lng: 121.9876543 });
+    expect(parseCoords('(25.1234567, 121.9876543)')).toEqual({ lat: 25.1234567, lng: 121.9876543 });
+  });
 });

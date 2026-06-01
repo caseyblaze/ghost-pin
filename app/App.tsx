@@ -71,7 +71,7 @@ function ClipboardBanner({ coords, onApply, onDismiss }: BannerProps) {
     <Animated.View style={[styles.banner, { transform: [{ translateY }] }]}>
       <View style={styles.bannerAccent} />
       <Text style={styles.bannerText} numberOfLines={1}>
-        📋 {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
+        📋 {coords.lat.toFixed(7)}, {coords.lng.toFixed(7)}
       </Text>
       <Pressable style={({ pressed }) => pressed && { opacity: 0.6 }} onPress={() => hide(onApplyRef.current)}>
         <Text style={styles.bannerApply}>套用</Text>
@@ -155,8 +155,8 @@ export default function App() {
 
   function handleApply() {
     if (!pendingCoords) return;
-    setLat(pendingCoords.lat.toFixed(4));
-    setLng(pendingCoords.lng.toFixed(4));
+    setLat(pendingCoords.lat.toFixed(7));
+    setLng(pendingCoords.lng.toFixed(7));
     setPendingCoords(null);
   }
 

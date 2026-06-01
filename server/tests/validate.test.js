@@ -30,4 +30,11 @@ describe('validateCoords', () => {
   test('rejects missing input', () => {
     expect(validateCoords(undefined, undefined)).toEqual({ ok: false, message: 'lat 不是有效數字' });
   });
+
+  test('preserves 7 decimal places', () => {
+    const result = validateCoords(25.1234567, 121.9876543);
+    expect(result.ok).toBe(true);
+    expect(result.lat).toBe(25.1234567);
+    expect(result.lng).toBe(121.9876543);
+  });
 });
