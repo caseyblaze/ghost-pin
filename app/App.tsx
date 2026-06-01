@@ -93,8 +93,16 @@ export default function App() {
 
   async function refreshStatus() {
     const r = await getStatus();
-    if (!r.ok) setStatus(`離線：${r.message}`);
-    else setStatus(r.data?.online ? '裝置已連線' : '無裝置連線');
+    if (!r.ok) {
+      setStatus(`離線：${r.message}`);
+      setStatusType('error');
+    } else if (r.data?.online) {
+      setStatus('裝置已連線');
+      setStatusType('success');
+    } else {
+      setStatus('無裝置連線');
+      setStatusType('info');
+    }
   }
 
   useEffect(() => { refreshStatus(); }, []);
@@ -120,6 +128,7 @@ export default function App() {
     setBusy(true);
     const r = await setLocation(Number(lat), Number(lng));
     setStatus(r.ok ? `已設定 ${lat}, ${lng}` : `失敗：${r.message}`);
+    setStatusType(r.ok ? 'success' : 'error');
     setBusy(false);
   }
 
@@ -127,6 +136,7 @@ export default function App() {
     setBusy(true);
     const r = await resetLocation();
     setStatus(r.ok ? '已恢復真實定位' : `失敗：${r.message}`);
+    setStatusType(r.ok ? 'success' : 'error');
     setBusy(false);
   }
 
