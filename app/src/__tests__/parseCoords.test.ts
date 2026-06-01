@@ -36,4 +36,18 @@ describe('parseCoords', () => {
   it('handles extra whitespace', () => {
     expect(parseCoords('(  25.0330 ,  121.5654  )')).toEqual({ lat: 25.033, lng: 121.5654 });
   });
+
+  it('returns null for negative lat out of range', () => {
+    expect(parseCoords('(-91, 0)')).toBeNull();
+  });
+
+  it('accepts boundary lat/lng values', () => {
+    expect(parseCoords('(90, 180)')).toEqual({ lat: 90, lng: 180 });
+    expect(parseCoords('(-90, -180)')).toEqual({ lat: -90, lng: -180 });
+  });
+
+  it('returns null for mismatched parentheses', () => {
+    expect(parseCoords('(25.0330, 121.5654')).toBeNull();
+    expect(parseCoords('25.0330, 121.5654)')).toBeNull();
+  });
 });

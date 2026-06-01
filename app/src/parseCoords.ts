@@ -1,9 +1,10 @@
 export type Coords = { lat: number; lng: number };
 
 export function parseCoords(text: string): Coords | null {
-  const match = text.trim().match(
-    /^\(?\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)?$/
-  );
+  const NUM = '-?\\d+(?:\\.\\d+)?';
+  const match =
+    text.trim().match(new RegExp(`^\\(\\s*(${NUM})\\s*,\\s*(${NUM})\\s*\\)$`)) ||
+    text.trim().match(new RegExp(`^(${NUM})\\s*,\\s*(${NUM})$`));
   if (!match) return null;
   const lat = parseFloat(match[1]);
   const lng = parseFloat(match[2]);
