@@ -19,12 +19,14 @@ type BannerProps = {
 function ClipboardBanner({ coords, onApply, onDismiss }: BannerProps) {
   const translateY = useRef(new Animated.Value(BANNER_HIDDEN_Y)).current;
   const isHiding = useRef(false);
+  const onApplyRef = useRef(onApply);
   const onDismissRef = useRef(onDismiss);
   const animRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
+    onApplyRef.current = onApply;
     onDismissRef.current = onDismiss;
-  }, [onDismiss]);
+  }, [onApply, onDismiss]);
 
   function hide(callback: () => void) {
     if (isHiding.current) return;
@@ -57,10 +59,10 @@ function ClipboardBanner({ coords, onApply, onDismiss }: BannerProps) {
       <Text style={styles.bannerText} numberOfLines={1}>
         📋 {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
       </Text>
-      <Pressable onPress={() => hide(onApply)}>
+      <Pressable onPress={() => hide(onApplyRef.current)}>
         <Text style={styles.bannerApply}>套用</Text>
       </Pressable>
-      <Pressable onPress={() => hide(onDismiss)}>
+      <Pressable onPress={() => hide(onDismissRef.current)}>
         <Text style={styles.bannerDismissBtn}>✕</Text>
       </Pressable>
     </Animated.View>
