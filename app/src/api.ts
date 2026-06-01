@@ -2,11 +2,12 @@ import { SERVER_BASE_URL } from './config';
 
 export type ApiResult = { ok: boolean; message: string; data?: { online?: boolean } };
 
-const FETCH_TIMEOUT_MS = 8000;
+const LOCATION_TIMEOUT_MS = 30000;
+const STATUS_TIMEOUT_MS = 8000;
 
 async function post(path: string, body?: object): Promise<ApiResult> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), LOCATION_TIMEOUT_MS);
   try {
     const res = await fetch(`${SERVER_BASE_URL}${path}`, {
       method: 'POST',
@@ -32,10 +33,15 @@ export function resetLocation(): Promise<ApiResult> {
 }
 
 export async function getStatus(): Promise<ApiResult> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), STATUS_TIMEOUT_MS);
   try {
-    const res = await fetch(`${SERVER_BASE_URL}/status`);
+    const res = await fetch(`${SERVER_BASE_URL}/status`, { signal: controller.signal });
+    clearTimeout(timer);
     return (await res.json()) as ApiResult;
   } catch (e) {
-    return { ok: false, message: `連線失敗：${String(e)}` };
+    clearTimeout(timer);
+    const isTimeout = e instanceof Error && e.name === 'AbortError';
+    return { ok: false, message: isTimeout ? '連線逾時' : `連線失敗：${String(e)}` };
   }
 }
