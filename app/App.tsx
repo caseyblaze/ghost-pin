@@ -126,6 +126,8 @@ export default function App() {
 
   async function onSet() {
     setBusy(true);
+    setStatus('設定中…');
+    setStatusType('info');
     const r = await setLocation(Number(lat), Number(lng));
     setStatus(r.ok ? `已設定 ${lat}, ${lng}` : `失敗：${r.message}`);
     setStatusType(r.ok ? 'success' : 'error');
@@ -134,6 +136,8 @@ export default function App() {
 
   async function onReset() {
     setBusy(true);
+    setStatus('恢復中…');
+    setStatusType('info');
     const r = await resetLocation();
     setStatus(r.ok ? '已恢復真實定位' : `失敗：${r.message}`);
     setStatusType(r.ok ? 'success' : 'error');
