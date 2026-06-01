@@ -2,11 +2,11 @@
 
 改變實體 iPhone 定位的介面。Expo App → Node.js Server → pymobiledevice3 → iPhone（iOS 17+）。
 
-![主畫面](docs/screenshot.png)
+<img width="300" src="docs/screenshot.png" alt="主畫面">
 
 ## Demo
 
-![設定定位流程](docs/demo.gif)
+<img width="300" src="docs/demo.gif" alt="設定定位流程">
 
 ## 一次性設定
 
