@@ -11,13 +11,13 @@ function createRoutes(pmd) {
       res.status(400).json({ ok: false, message: v.message });
       return;
     }
-    res.json({ ok: true, message: 'ok' });
     pmd.setLocation(v.lat, v.lng);
+    res.json({ ok: true, message: 'ok' });
   });
 
-  router.post('/reset', (_req, res) => {
-    res.json({ ok: true, message: 'ok' });
-    pmd.clearLocation();
+  router.post('/reset', async (_req, res) => {
+    const result = await pmd.clearLocation();
+    res.json({ ok: result.ok, message: result.message });
   });
 
   router.get('/status', async (req, res) => {

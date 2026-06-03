@@ -17,14 +17,35 @@ function createPmd(execFile = nodeExecFile) {
     });
   }
 
+  let activeSetProcess = null;
+
   function setLocation(lat, lng) {
-    return run([
-      'developer', 'dvt', 'simulate-location', 'set', '--tunnel', '',
-      '--', String(lat), String(lng),
-    ]);
+    if (activeSetProcess) {
+      activeSetProcess.kill();
+      activeSetProcess = null;
+    }
+    return new Promise((resolve) => {
+      const child = nodeExecFile(BIN, [
+        'developer', 'dvt', 'simulate-location', 'set', '--tunnel', '',
+        '--', String(lat), String(lng),
+      ], (error, _stdout, stderr) => {
+        if (child === activeSetProcess) activeSetProcess = null;
+        if (error && error.signal !== 'SIGTERM' && error.signal !== 'SIGKILL') {
+          const detail = (stderr && stderr.trim()) || error.message;
+          resolve({ ok: false, message: `pymobiledevice3 失敗: ${detail}` });
+          return;
+        }
+        resolve({ ok: true, message: '' });
+      });
+      activeSetProcess = child;
+    });
   }
 
   function clearLocation() {
+    if (activeSetProcess) {
+      activeSetProcess.kill();
+      activeSetProcess = null;
+    }
     return run(['developer', 'dvt', 'simulate-location', 'clear', '--tunnel', '']);
   }
 
