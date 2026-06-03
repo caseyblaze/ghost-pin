@@ -7,3 +7,4 @@ __pycache__/
 
 # local config (contains LAN IP — use app/src/config.example.ts as template)
 app/src/config.ts
+errors.log
