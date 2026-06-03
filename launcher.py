@@ -6,16 +6,13 @@ import os
 
 PROJ = os.path.dirname(os.path.abspath(__file__))
 
-SUDOERS_FILE = "/etc/sudoers.d/ghost-pin-launcher"
-
-BG        = "#000000"
-FG        = "#ffffff"
-SEP       = "#333333"
-BTN_START = "#1a5c1a"
-BTN_FG    = "#ffffff"
-BTN_STOP  = "#5c1a1a"
-GRAY      = "#aaaaaa"
-GREEN     = "#44ff44"
+BG     = "#000000"
+FG     = "#ffffff"
+SEP    = "#333333"
+BTN_BG = "#3d3d3d"
+BTN_FG = "#ffffff"
+GRAY   = "#aaaaaa"
+GREEN  = "#44ff44"
 
 
 def is_running(pattern):
@@ -23,43 +20,8 @@ def is_running(pattern):
     return result.returncode == 0
 
 
-def _is_sudoers_ready():
-    return os.path.exists(SUDOERS_FILE)
-
-
-def _ensure_sudoers():
-    user = os.environ.get("USER", "")
-    if not user:
-        return False
-    tmp = "/tmp/ghost-pin-sudoers-tmp"
-    with open(tmp, "w") as f:
-        f.write(f"{user} ALL=(ALL) NOPASSWD: /usr/bin/pkill\n")
-    result = subprocess.run([
-        "osascript", "-e",
-        f'do shell script "mv {tmp} {SUDOERS_FILE} && chown 0:0 {SUDOERS_FILE} && chmod 440 {SUDOERS_FILE}"'
-        f' with administrator privileges',
-    ], capture_output=True)
-    return result.returncode == 0
-
-
 def _run_async(cmd):
     threading.Thread(target=lambda: subprocess.run(cmd), daemon=True).start()
-
-
-def start_tunneld():
-    _run_async([
-        "osascript", "-e",
-        'do shell script "pymobiledevice3 remote tunneld > /dev/null 2>&1 &"'
-        ' with administrator privileges',
-    ])
-
-
-def stop_tunneld():
-    def _do():
-        if not _is_sudoers_ready():
-            _ensure_sudoers()
-        subprocess.run(["sudo", "-n", "pkill", "-f", "pymobiledevice3"])
-    threading.Thread(target=_do, daemon=True).start()
 
 
 def start_dev():
@@ -91,53 +53,46 @@ class LauncherApp(tk.Tk):
         ).pack(padx=16, pady=12)
         tk.Frame(self, bg=SEP, height=1).pack(fill="x")
 
-        self.tunneld_status, self.tunneld_btn = self._build_row("iOS 通道（tunneld）")
-        tk.Frame(self, bg=SEP, height=1).pack(fill="x")
-        self.dev_status, self.dev_btn = self._build_row("開發服務（Expo）")
+        # Tunneld: status only
+        row = tk.Frame(self, bg=BG)
+        row.pack(fill="x", padx=16, pady=10)
+        tk.Label(row, text="iOS 通道（tunneld）", bg=BG, fg=FG, font=("System", 12)).pack(side="left")
+        self.tunneld_status = tk.Label(row, text="● 未啟動", bg=BG, fg=GRAY, font=("System", 11))
+        self.tunneld_status.pack(side="right")
 
-    def _build_row(self, label):
+        tk.Frame(self, bg=SEP, height=1).pack(fill="x")
+
+        # Dev service: status + button
         frame = tk.Frame(self, bg=BG)
         frame.pack(fill="x", padx=16, pady=10)
-
         top = tk.Frame(frame, bg=BG)
         top.pack(fill="x")
-        tk.Label(top, text=label, bg=BG, fg=FG, font=("System", 12)).pack(side="left")
-        status_lbl = tk.Label(
-            top, text="● 未啟動", bg=BG, fg=GRAY, font=("System", 11),
-        )
-        status_lbl.pack(side="right")
-
-        btn = tk.Button(
-            frame, text="啟動", bg=BTN_START, fg=BTN_FG,
+        tk.Label(top, text="開發服務（Expo）", bg=BG, fg=FG, font=("System", 12)).pack(side="left")
+        self.dev_status = tk.Label(top, text="● 未啟動", bg=BG, fg=GRAY, font=("System", 11))
+        self.dev_status.pack(side="right")
+        self.dev_btn = tk.Button(
+            frame, text="啟動", bg=BTN_BG, fg=BTN_FG,
             font=("System", 11), width=8, bd=0, cursor="hand2",
         )
-        btn.pack(anchor="w", pady=(6, 0))
-
-        return status_lbl, btn
+        self.dev_btn.pack(anchor="w", pady=(6, 0))
 
     def _poll(self):
         if not self.winfo_exists():
             return
-        tunneld_running = is_running("pymobiledevice3 remote tunneld")
-        dev_running = is_running("expo start")
 
-        self._update_row(
-            self.tunneld_status, self.tunneld_btn,
-            tunneld_running, start_tunneld, stop_tunneld,
-        )
-        self._update_row(
-            self.dev_status, self.dev_btn,
-            dev_running, start_dev, stop_dev,
-        )
-        self.after(1000, self._poll)
-
-    def _update_row(self, status_lbl, btn, running, start_fn, stop_fn):
-        if running:
-            status_lbl.config(text="● 運行中", fg=GREEN)
-            btn.config(text="中斷", bg=BTN_STOP, command=stop_fn)
+        if is_running("pymobiledevice3 remote tunneld"):
+            self.tunneld_status.config(text="● 運行中", fg=GREEN)
         else:
-            status_lbl.config(text="● 未啟動", fg=GRAY)
-            btn.config(text="啟動", bg=BTN_START, command=start_fn)
+            self.tunneld_status.config(text="● 未啟動", fg=GRAY)
+
+        if is_running("expo start"):
+            self.dev_status.config(text="● 運行中", fg=GREEN)
+            self.dev_btn.config(text="中斷", command=stop_dev)
+        else:
+            self.dev_status.config(text="● 未啟動", fg=GRAY)
+            self.dev_btn.config(text="啟動", command=start_dev)
+
+        self.after(1000, self._poll)
 
 
 if __name__ == "__main__":
