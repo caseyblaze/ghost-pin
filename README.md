@@ -22,6 +22,12 @@ sudo pymobiledevice3 remote tunneld
 
 ## 啟動
 
+**方式一：Mac App（推薦）**
+
+直接開啟 `GhostPin.app`，控制台提供按鈕啟動／停止服務，並顯示 iOS 通道與 Expo 連線狀態。
+
+**方式二：終端機**
+
 ```bash
 ./start.sh
 ```
