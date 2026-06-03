@@ -9,8 +9,8 @@ PROJ = os.path.dirname(os.path.abspath(__file__))
 BG     = "#000000"
 FG     = "#ffffff"
 SEP    = "#333333"
-BTN_BG = "#3d3d3d"
-BTN_FG = "#ffffff"
+BTN_BG = "#141313"
+BTN_FG = "#000000"
 GRAY   = "#aaaaaa"
 GREEN  = "#44ff44"
 
@@ -40,7 +40,7 @@ def stop_dev():
 class LauncherApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Ghost Pin 開發啟動器")
+        self.title("Ghost Pin")
         self.resizable(False, False)
         self.configure(bg=BG)
         self._build_ui()
@@ -48,7 +48,7 @@ class LauncherApp(tk.Tk):
 
     def _build_ui(self):
         tk.Label(
-            self, text="Ghost Pin 開發啟動器",
+            self, text="控制台",
             bg=BG, fg=FG, font=("System", 14, "bold"),
         ).pack(padx=16, pady=12)
         tk.Frame(self, bg=SEP, height=1).pack(fill="x")
@@ -56,7 +56,7 @@ class LauncherApp(tk.Tk):
         # Tunneld: status only
         row = tk.Frame(self, bg=BG)
         row.pack(fill="x", padx=16, pady=10)
-        tk.Label(row, text="iOS 通道（tunneld）", bg=BG, fg=FG, font=("System", 12)).pack(side="left")
+        tk.Label(row, text="iOS 通道", bg=BG, fg=FG, font=("System", 12)).pack(side="left")
         self.tunneld_status = tk.Label(row, text="● 未啟動", bg=BG, fg=GRAY, font=("System", 11))
         self.tunneld_status.pack(side="right")
 
@@ -67,7 +67,7 @@ class LauncherApp(tk.Tk):
         frame.pack(fill="x", padx=16, pady=10)
         top = tk.Frame(frame, bg=BG)
         top.pack(fill="x")
-        tk.Label(top, text="開發服務（Expo）", bg=BG, fg=FG, font=("System", 12)).pack(side="left")
+        tk.Label(top, text="連線 Expo Go", bg=BG, fg=FG, font=("System", 12)).pack(side="left")
         self.dev_status = tk.Label(top, text="● 未啟動", bg=BG, fg=GRAY, font=("System", 11))
         self.dev_status.pack(side="right")
         self.dev_btn = tk.Button(
