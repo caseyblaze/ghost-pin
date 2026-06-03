@@ -10,7 +10,7 @@
 
 ## 一次性設定
 
-1. `pipx install pymobiledevice3`
+1. `pipx install pymobiledevice3 --python python3.12`（Python 3.14 有 asyncio 相容問題，需指定 3.12）
 2. iPhone 開 Developer Mode、USB 連 Mac、信任電腦
 3. `pymobiledevice3 mounter auto-mount`
 4. App Store 安裝 **Expo Go**
@@ -34,6 +34,14 @@ sudo pymobiledevice3 remote tunneld
 - 按「恢復真實定位」取消模擬
 
 > **`Unable to run simctl` 可忽略。** Expo 偵測模擬器的警告，實機不受影響。
+
+## 除錯
+
+pymobiledevice3 執行失敗時會自動記錄到專案根目錄的 `errors.log`：
+
+```bash
+tail -f errors.log
+```
 
 ---
 
