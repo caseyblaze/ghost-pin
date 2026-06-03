@@ -6,17 +6,39 @@ import os
 
 PROJ = os.path.dirname(os.path.abspath(__file__))
 
-BG = "#1e1e1e"
-FG = "#ffffff"
-BTN_START = "#2d7d46"
-BTN_STOP = "#8b2020"
-BTN_FG = "#ffffff"
-GRAY = "#888888"
-GREEN = "#2ecc71"
+SUDOERS_FILE = "/etc/sudoers.d/ghost-pin-launcher"
+
+BG        = "#1c1c1e"
+FG        = "#f2f2f7"
+SEP       = "#38383a"
+BTN_START = "#0a84ff"
+BTN_FG    = "#ffffff"
+BTN_STOP  = "#ff453a"
+GRAY      = "#98989d"
+GREEN     = "#30d158"
 
 
 def is_running(pattern):
     result = subprocess.run(["pgrep", "-f", pattern], capture_output=True)
+    return result.returncode == 0
+
+
+def _is_sudoers_ready():
+    return os.path.exists(SUDOERS_FILE)
+
+
+def _ensure_sudoers():
+    user = os.environ.get("USER", "")
+    if not user:
+        return False
+    tmp = "/tmp/ghost-pin-sudoers-tmp"
+    with open(tmp, "w") as f:
+        f.write(f"{user} ALL=(ALL) NOPASSWD: /usr/bin/pkill\n")
+    result = subprocess.run([
+        "osascript", "-e",
+        f'do shell script "mv {tmp} {SUDOERS_FILE} && chmod 440 {SUDOERS_FILE}"'
+        f' with administrator privileges',
+    ], capture_output=True)
     return result.returncode == 0
 
 
@@ -33,11 +55,11 @@ def start_tunneld():
 
 
 def stop_tunneld():
-    _run_async([
-        "osascript", "-e",
-        'do shell script "pkill -f \\"pymobiledevice3 remote tunneld\\""'
-        ' with administrator privileges',
-    ])
+    def _do():
+        if not _is_sudoers_ready():
+            _ensure_sudoers()
+        subprocess.run(["sudo", "-n", "pkill", "-f", "pymobiledevice3"])
+    threading.Thread(target=_do, daemon=True).start()
 
 
 def start_dev():
@@ -67,10 +89,10 @@ class LauncherApp(tk.Tk):
             self, text="Ghost Pin 開發啟動器",
             bg=BG, fg=FG, font=("System", 14, "bold"),
         ).pack(padx=16, pady=12)
-        tk.Frame(self, bg="#333333", height=1).pack(fill="x")
+        tk.Frame(self, bg=SEP, height=1).pack(fill="x")
 
         self.tunneld_status, self.tunneld_btn = self._build_row("iOS 通道（tunneld）")
-        tk.Frame(self, bg="#333333", height=1).pack(fill="x")
+        tk.Frame(self, bg=SEP, height=1).pack(fill="x")
         self.dev_status, self.dev_btn = self._build_row("開發服務（Expo）")
 
     def _build_row(self, label):
