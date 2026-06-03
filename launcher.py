@@ -8,14 +8,14 @@ PROJ = os.path.dirname(os.path.abspath(__file__))
 
 SUDOERS_FILE = "/etc/sudoers.d/ghost-pin-launcher"
 
-BG        = "#1c1c1e"
-FG        = "#f2f2f7"
-SEP       = "#38383a"
-BTN_START = "#0a84ff"
+BG        = "#000000"
+FG        = "#ffffff"
+SEP       = "#333333"
+BTN_START = "#1a5c1a"
 BTN_FG    = "#ffffff"
-BTN_STOP  = "#ff453a"
-GRAY      = "#98989d"
-GREEN     = "#30d158"
+BTN_STOP  = "#5c1a1a"
+GRAY      = "#aaaaaa"
+GREEN     = "#44ff44"
 
 
 def is_running(pattern):
@@ -36,7 +36,7 @@ def _ensure_sudoers():
         f.write(f"{user} ALL=(ALL) NOPASSWD: /usr/bin/pkill\n")
     result = subprocess.run([
         "osascript", "-e",
-        f'do shell script "mv {tmp} {SUDOERS_FILE} && chmod 440 {SUDOERS_FILE}"'
+        f'do shell script "mv {tmp} {SUDOERS_FILE} && chown 0:0 {SUDOERS_FILE} && chmod 440 {SUDOERS_FILE}"'
         f' with administrator privileges',
     ], capture_output=True)
     return result.returncode == 0
