@@ -19,6 +19,10 @@ class TestProtocol(unittest.TestCase):
     def test_parse_invalid_json_returns_none(self):
         self.assertIsNone(d.parse_command("not json"))
 
+    def test_parse_non_dict_json_returns_none(self):
+        self.assertIsNone(d.parse_command("[1, 2, 3]"))
+        self.assertIsNone(d.parse_command("42"))
+
     def test_reply_ok(self):
         self.assertEqual(d.reply_ok(3), {"id": 3, "ok": True})
 

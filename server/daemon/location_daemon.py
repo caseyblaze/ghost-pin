@@ -22,9 +22,10 @@ def parse_command(line):
     if not line:
         return None
     try:
-        return json.loads(line)
+        data = json.loads(line)
     except ValueError:
         return None
+    return data if isinstance(data, dict) else None
 
 
 def reply_ok(req_id):
@@ -83,7 +84,12 @@ async def main():
             cmd = msg.get("cmd")
             try:
                 if cmd == "set":
-                    await loc.set(float(msg["lat"]), float(msg["lng"]))
+                    try:
+                        lat, lng = float(msg["lat"]), float(msg["lng"])
+                    except (KeyError, TypeError, ValueError) as exc:
+                        write_line(reply_err(req_id, "bad set payload: %s" % exc))
+                        continue
+                    await loc.set(lat, lng)
                 elif cmd == "clear":
                     await loc.clear()
                 elif cmd == "ping":
