@@ -14,10 +14,17 @@
 2. iPhone 開 Developer Mode、USB 連 Mac、信任電腦
 3. `pymobiledevice3 mounter auto-mount`
 4. App Store 安裝 **Expo Go**
-5. 常駐 tunnel（保持開著，Mac 重開後需重跑）：
+5. 安裝常駐 tunnel（一次性，之後開機自動啟動、掛掉自動重啟）：
 
 ```bash
-sudo pymobiledevice3 remote tunneld
+sudo ./scripts/install-tunneld.sh
+```
+
+狀態與日誌：
+
+```bash
+launchctl print system/com.ghostpin.tunneld
+tail -f /tmp/ghostpin-tunneld.log
 ```
 
 ## 啟動
