@@ -99,6 +99,29 @@ describe('pmd supervisor', () => {
     expect(spawnDaemon.created.length).toBe(2);  // restarted
   });
 
+  test('ignores a duplicate exit from the same daemon (no double restart)', async () => {
+    const spawnDaemon = daemonFactory();
+    const pmd = createPmd({ spawnDaemon, execFile: fakeExecFile(ONLINE) });
+    pmd.setLocation(1, 1);
+    const d = spawnDaemon.latest();
+    d.ready();
+    d.exit(1, 'died');
+    d.exit(-1, 'error after exit');   // stale second event must be ignored
+    jest.advanceTimersByTime(1000);
+    expect(spawnDaemon.created.length).toBe(2);  // exactly one restart, not two
+  });
+
+  test('settles a pre-ready request when daemon exits before ready', async () => {
+    const spawnDaemon = daemonFactory();
+    const pmd = createPmd({ spawnDaemon, execFile: fakeExecFile(ONLINE) });
+    const p = pmd.setLocation(9, 9);             // queued before ready
+    spawnDaemon.latest().exit(1, 'died early');  // never reached ready
+    const res = await p;
+    expect(res.ok).toBe(false);
+    jest.advanceTimersByTime(1000);
+    expect(spawnDaemon.created.length).toBe(2);  // restarted
+  });
+
   test('after restart re-applies last coordinate', async () => {
     const spawnDaemon = daemonFactory();
     const pmd = createPmd({ spawnDaemon, execFile: fakeExecFile(ONLINE) });

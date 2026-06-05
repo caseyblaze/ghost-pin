@@ -33,6 +33,8 @@ function resolvePython(deps = {}) {
   try {
     const bin   = execFileSync('which', [BIN]).toString().trim();
     const first = readFileSync(bin, 'utf8').split('\n')[0];
+    // pipx installs a direct-path shebang (#!/.../venv/bin/python), so the
+    // first token after #! is the interpreter. (Not handling /usr/bin/env style.)
     if (first.startsWith('#!')) return first.slice(2).trim().split(/\s+/)[0];
   } catch (_) { /* fall through */ }
   return 'python3';
@@ -56,8 +58,10 @@ function realSpawnDaemon() {
     }
   });
   child.stderr.on('data', (d) => { stderr += d; });
-  child.on('exit',  (code) => bus.emit('exit', code, stderr.trim()));
-  child.on('error', (err)  => bus.emit('exit', -1, err.message));
+  let exited = false;
+  const emitExit = (code, detail) => { if (exited) return; exited = true; bus.emit('exit', code, detail); };
+  child.on('exit',  (code) => emitExit(code, stderr.trim()));
+  child.on('error', (err)  => emitExit(-1, err.message));
   return {
     send: (obj) => { try { child.stdin.write(JSON.stringify(obj) + '\n'); } catch (_) {} },
     on:   (e, cb) => bus.on(e, cb),
@@ -73,7 +77,6 @@ function createPmd(deps = {}) {
 
   let daemon       = null;
   let ready        = false;
-  let started      = false;       // user has requested at least once
   let seq          = 0;
   const pending    = new Map();   // id -> { resolve, timer, cmd, payload, sent }
   let lastCoord    = null;        // {lat,lng} | null
@@ -91,7 +94,7 @@ function createPmd(deps = {}) {
   function reapplyLastCoord() {
     if (!lastCoord) return;
     const id = ++seq;
-    const timer = setTimer(() => pending.delete(id), REQUEST_TIMEOUT_MS);
+    const timer = setTimer(() => settle(id, { ok: false, message: RESTART_MSG }), REQUEST_TIMEOUT_MS);
     pending.set(id, { resolve: () => {}, timer, sent: true });
     daemon.send({ id, cmd: 'set', lat: lastCoord.lat, lng: lastCoord.lng });
   }
@@ -133,14 +136,17 @@ function createPmd(deps = {}) {
   }
 
   function start() {
-    daemon = spawnDaemon();
+    const d = spawnDaemon();
+    daemon = d;
     ready  = false;
-    daemon.on('message', onMessage);
-    daemon.on('exit', onExit);
+    // Bind handlers to THIS daemon instance. After a restart, a stale daemon
+    // that emits again (e.g. 'exit' then 'error' on spawn failure) is ignored,
+    // so we never schedule two restarts or talk to two daemons at once.
+    d.on('message', (msg) => { if (daemon === d) onMessage(msg); });
+    d.on('exit', (code, detail) => { if (daemon === d) onExit(code, detail); });
   }
 
   function ensureStarted() {
-    started = true;
     if (!daemon && !restartTimer) start();
   }
 
