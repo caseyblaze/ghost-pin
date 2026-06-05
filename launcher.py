@@ -20,6 +20,20 @@ def is_running(pattern):
     return result.returncode == 0
 
 
+TUNNELD_LABEL = "com.ghostpin.tunneld"
+
+
+def tunneld_state():
+    """Return one of: 'running', 'stopped', 'absent' based on launchd."""
+    result = subprocess.run(
+        ["launchctl", "print", f"system/{TUNNELD_LABEL}"],
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        return "absent"
+    return "running" if "state = running" in result.stdout else "stopped"
+
+
 def _run_async(cmd):
     threading.Thread(target=lambda: subprocess.run(cmd), daemon=True).start()
 
@@ -80,10 +94,13 @@ class LauncherApp(tk.Tk):
         if not self.winfo_exists():
             return
 
-        if is_running("pymobiledevice3 remote tunneld"):
+        state = tunneld_state()
+        if state == "running":
             self.tunneld_status.config(text="● 運行中", fg=GREEN)
+        elif state == "stopped":
+            self.tunneld_status.config(text="● 已停止", fg=GRAY)
         else:
-            self.tunneld_status.config(text="● 未啟動", fg=GRAY)
+            self.tunneld_status.config(text="● 未安裝（跑 install-tunneld.sh）", fg=GRAY)
 
         if is_running("expo start"):
             self.dev_status.config(text="● 運行中", fg=GREEN)
