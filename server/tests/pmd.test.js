@@ -9,7 +9,7 @@ function makeFakeDaemon() {
     killed: false,
     send: (obj) => d.sent.push(obj),
     on: (e, cb) => bus.on(e, cb),
-    kill: () => { d.killed = true; },
+    kill: () => { d.killed = true; bus.emit('exit', -1, 'killed'); },
     // test helpers
     ready: () => bus.emit('message', { event: 'ready' }),
     reply: (id, ok, error) => bus.emit('message', { id, ok, error }),
@@ -85,6 +85,33 @@ describe('pmd supervisor', () => {
     const res = await p;
     expect(res.ok).toBe(false);
     expect(res.message).toContain('重啟中');
+  });
+
+  test('a delivered request that times out restarts the wedged daemon', async () => {
+    const spawnDaemon = daemonFactory();
+    const pmd = createPmd({ spawnDaemon, execFile: fakeExecFile(ONLINE) });
+    const p = pmd.setLocation(3, 3);
+    spawnDaemon.latest().ready();          // request delivered
+    jest.advanceTimersByTime(5000);        // no reply -> wedge -> kill -> exit
+    const res = await p;
+    expect(res.ok).toBe(false);
+    jest.advanceTimersByTime(1000);        // backoff restart
+    expect(spawnDaemon.created.length).toBe(2);
+  });
+
+  test('periodic ping restarts an idle wedged daemon', async () => {
+    const spawnDaemon = daemonFactory();
+    const pmd = createPmd({ spawnDaemon, execFile: fakeExecFile(ONLINE) });
+    const p = pmd.setLocation(4, 4);
+    const d = spawnDaemon.latest();
+    d.ready();
+    d.reply(d.sent[0].id, true);           // initial set succeeds
+    await p;
+    jest.advanceTimersByTime(10000);       // ping fires
+    expect(d.sent).toContainEqual({ id: expect.any(Number), cmd: 'ping' });
+    jest.advanceTimersByTime(5000);        // ping unanswered -> wedge -> kill -> exit
+    jest.advanceTimersByTime(1000);        // backoff restart
+    expect(spawnDaemon.created.length).toBe(2);
   });
 
   test('daemon exit settles pending and schedules backoff restart', async () => {

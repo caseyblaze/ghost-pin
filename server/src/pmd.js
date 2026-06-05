@@ -8,6 +8,7 @@ const LOG_PATH    = path.join(__dirname, '..', '..', 'errors.log');
 const DAEMON_PATH = path.join(__dirname, '..', 'daemon', 'location_daemon.py');
 
 const REQUEST_TIMEOUT_MS = 5000;
+const PING_INTERVAL_MS   = 10000;
 const BACKOFF_START_MS   = 1000;
 const BACKOFF_MAX_MS     = 30000;
 const RESTART_MSG        = '定位服務重啟中，請稍後再試';
@@ -82,6 +83,7 @@ function createPmd(deps = {}) {
   let lastCoord    = null;        // {lat,lng} | null
   let backoff      = BACKOFF_START_MS;
   let restartTimer = null;
+  let pingTimer    = null;
 
   function settle(id, result) {
     const p = pending.get(id);
@@ -94,7 +96,7 @@ function createPmd(deps = {}) {
   function reapplyLastCoord() {
     if (!lastCoord) return;
     const id = ++seq;
-    const timer = setTimer(() => settle(id, { ok: false, message: RESTART_MSG }), REQUEST_TIMEOUT_MS);
+    const timer = setTimer(() => onRequestTimeout(id, 'set'), REQUEST_TIMEOUT_MS);
     pending.set(id, { resolve: () => {}, timer, sent: true });
     daemon.send({ id, cmd: 'set', lat: lastCoord.lat, lng: lastCoord.lng });
   }
@@ -148,16 +150,47 @@ function createPmd(deps = {}) {
 
   function ensureStarted() {
     if (!daemon && !restartTimer) start();
+    if (!pingTimer) scheduleHealthCheck();
+  }
+
+  // A delivered request (or ping) that gets no reply within the timeout means
+  // the daemon is wedged: the process is alive but its DVT session is
+  // unresponsive. Killing it triggers onExit -> backoff restart -> re-apply.
+  // A request that was never delivered (daemon down/not ready) just resolves
+  // with the restart message and does NOT kill (there's nothing to kill).
+  function onRequestTimeout(id, cmd) {
+    const p = pending.get(id);
+    const wasDelivered = !!(p && p.sent);
+    settle(id, { ok: false, message: RESTART_MSG });
+    if (wasDelivered && daemon) {
+      logError('location-daemon', `${cmd} timeout, restarting wedged daemon`);
+      daemon.kill();
+    }
   }
 
   function request(cmd, payload) {
     return new Promise((resolve) => {
       const id    = ++seq;
-      const timer = setTimer(() => settle(id, { ok: false, message: RESTART_MSG }), REQUEST_TIMEOUT_MS);
+      const timer = setTimer(() => onRequestTimeout(id, cmd), REQUEST_TIMEOUT_MS);
       const sent  = !!(ready && daemon);
       pending.set(id, { resolve, timer, cmd, payload, sent });
       if (sent) daemon.send({ id, cmd, ...payload });
     });
+  }
+
+  // Periodic liveness probe so an idle wedged session is healed before the
+  // next user action rather than on it. The ping flows through the same
+  // pending/timeout machinery, so a missing reply restarts the daemon.
+  function pingOnce() {
+    if (!ready || !daemon) return;
+    const id    = ++seq;
+    const timer = setTimer(() => onRequestTimeout(id, 'ping'), REQUEST_TIMEOUT_MS);
+    pending.set(id, { resolve: () => {}, timer, cmd: 'ping', payload: {}, sent: true });
+    daemon.send({ id, cmd: 'ping' });
+  }
+
+  function scheduleHealthCheck() {
+    pingTimer = setTimer(() => { pingOnce(); scheduleHealthCheck(); }, PING_INTERVAL_MS);
   }
 
   function setLocation(lat, lng) {
