@@ -15,15 +15,23 @@ fi
 
 # Resolve the absolute pymobiledevice3 binary (must be on the invoking user's PATH).
 PMD3_BIN="$(command -v pymobiledevice3 || true)"
-if [ -z "$PMD3_BIN" ]; then
-  PMD3_BIN="$(sudo -u "${SUDO_USER:-$USER}" bash -lc 'command -v pymobiledevice3' || true)"
+if [ -z "$PMD3_BIN" ] && [ -n "${SUDO_USER:-}" ]; then
+  PMD3_BIN="$(sudo -u "$SUDO_USER" bash -lc 'command -v pymobiledevice3' || true)"
 fi
 if [ -z "$PMD3_BIN" ]; then
   echo "找不到 pymobiledevice3，請先 pipx install pymobiledevice3" >&2
   exit 1
 fi
 
-sed "s#__PMD3_BIN__#$PMD3_BIN#" "$PLIST_SRC" > "$PLIST_DST"
+# Substitute the binary path with a literal string replace (no shell/sed
+# metacharacter interpretation), writing atomically into place.
+TMP_PLIST="$(mktemp)"
+PMD3_BIN="$PMD3_BIN" python3 -c '
+import os, sys
+src = open(sys.argv[1]).read()
+sys.stdout.write(src.replace("__PMD3_BIN__", os.environ["PMD3_BIN"]))
+' "$PLIST_SRC" > "$TMP_PLIST"
+mv "$TMP_PLIST" "$PLIST_DST"
 chown root:wheel "$PLIST_DST"
 chmod 644 "$PLIST_DST"
 
