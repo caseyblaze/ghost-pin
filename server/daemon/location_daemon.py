@@ -11,9 +11,6 @@ import json
 import sys
 import threading
 
-from pymobiledevice3.services.dvt.instruments.dvt_provider import DvtProvider
-from pymobiledevice3.services.dvt.instruments.location_simulation import LocationSimulation
-from pymobiledevice3.tunneld.api import TUNNELD_DEFAULT_ADDRESS, get_tunneld_devices
 
 
 def parse_command(line):
@@ -59,6 +56,8 @@ async def _stdin_lines(loop):
 
 
 async def _pick_rsd(udid):
+    from pymobiledevice3.tunneld.api import TUNNELD_DEFAULT_ADDRESS, get_tunneld_devices
+
     rsds = await get_tunneld_devices(TUNNELD_DEFAULT_ADDRESS)
     if not rsds:
         raise RuntimeError("no device available via tunneld")
@@ -71,6 +70,9 @@ async def _pick_rsd(udid):
 
 
 async def main():
+    from pymobiledevice3.services.dvt.instruments.dvt_provider import DvtProvider
+    from pymobiledevice3.services.dvt.instruments.location_simulation import LocationSimulation
+
     loop = asyncio.get_running_loop()
     udid = sys.argv[1] if len(sys.argv) > 1 else ""
     rsd = await _pick_rsd(udid or None)

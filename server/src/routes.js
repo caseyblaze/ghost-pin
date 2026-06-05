@@ -22,7 +22,11 @@ function createRoutes(pmd) {
 
   router.get('/status', async (req, res) => {
     const result = await pmd.getStatus();
-    res.status(200).json({ ok: result.ok, message: result.message, data: { online: result.online } });
+    res.status(200).json({
+      ok: result.ok,
+      message: result.message,
+      data: { online: result.online, ready: result.ready },
+    });
   });
 
   return router;

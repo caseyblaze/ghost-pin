@@ -46,10 +46,11 @@ describe('routes', () => {
 
   test('GET /status returns device status', async () => {
     const pmd = {
-      getStatus: jest.fn().mockResolvedValue({ ok: true, online: true, message: '裝置已連線' }),
+      getStatus: jest.fn().mockResolvedValue({ ok: true, online: true, ready: true, message: '定位服務就緒' }),
     };
     const res = await request(makeApp(pmd)).get('/status');
     expect(res.status).toBe(200);
     expect(res.body.data.online).toBe(true);
+    expect(res.body.data.ready).toBe(true);
   });
 });

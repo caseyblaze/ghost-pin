@@ -21,17 +21,22 @@ def is_running(pattern):
 
 
 TUNNELD_LABEL = "com.ghostpin.tunneld"
+TUNNELD_PLIST = f"/Library/LaunchDaemons/{TUNNELD_LABEL}.plist"
 
 
 def tunneld_state():
-    """Return one of: 'running', 'stopped', 'absent' based on launchd."""
-    result = subprocess.run(
-        ["launchctl", "print", f"system/{TUNNELD_LABEL}"],
-        capture_output=True, text=True,
-    )
-    if result.returncode != 0:
-        return "absent"
-    return "running" if "state = running" in result.stdout else "stopped"
+    """Return one of: 'running', 'stopped', 'absent'.
+
+    The launcher runs as a normal user and cannot query launchd's system
+    domain (`launchctl print system/...` needs root). Instead detect the
+    live process with pgrep (works across users) and fall back to the
+    installed plist's existence to distinguish stopped vs never-installed.
+    """
+    if is_running("remote tunneld"):
+        return "running"
+    if os.path.exists(TUNNELD_PLIST):
+        return "stopped"
+    return "absent"
 
 
 def _run_async(cmd):
