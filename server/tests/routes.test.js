@@ -10,14 +10,20 @@ function makeApp(pmd) {
 }
 
 describe('routes', () => {
-  test('POST /location with valid coords calls pmd.setLocation and returns ok', async () => {
-    const pmd = {
-      setLocation: jest.fn().mockResolvedValue({ ok: true, message: 'ok' }),
-    };
+  test('POST /location with valid coords returns daemon result', async () => {
+    const pmd = { setLocation: jest.fn().mockResolvedValue({ ok: true, message: '' }) };
     const res = await request(makeApp(pmd)).post('/location').send({ lat: 25.033, lng: 121.5654 });
     expect(res.status).toBe(200);
-    expect(res.body.ok).toBe(true);
+    expect(res.body).toEqual({ ok: true, message: '' });
     expect(pmd.setLocation).toHaveBeenCalledWith(25.033, 121.5654);
+  });
+
+  test('POST /location surfaces daemon failure', async () => {
+    const pmd = { setLocation: jest.fn().mockResolvedValue({ ok: false, message: '定位服務重啟中，請稍後再試' }) };
+    const res = await request(makeApp(pmd)).post('/location').send({ lat: 0, lng: 0 });
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(false);
+    expect(res.body.message).toContain('重啟中');
   });
 
   test('POST /location with invalid coords returns 400 and does not call pmd', async () => {
@@ -26,16 +32,6 @@ describe('routes', () => {
     expect(res.status).toBe(400);
     expect(res.body.ok).toBe(false);
     expect(pmd.setLocation).not.toHaveBeenCalled();
-  });
-
-  test('POST /location always returns ok immediately regardless of pmd result', async () => {
-    const pmd = {
-      setLocation: jest.fn().mockResolvedValue({ ok: false, message: 'Tunnel not found' }),
-    };
-    const res = await request(makeApp(pmd)).post('/location').send({ lat: 0, lng: 0 });
-    expect(res.status).toBe(200);
-    expect(res.body.ok).toBe(true);
-    expect(pmd.setLocation).toHaveBeenCalledWith(0, 0);
   });
 
   test('POST /reset calls pmd.clearLocation', async () => {
