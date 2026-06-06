@@ -23,7 +23,9 @@ if pgrep -f "pymobiledevice3 remote tunneld" >/dev/null; then
 else
   echo "→ 啟動 tunneld（需要 root，請輸入密碼）..."
   sudo -v
-  sudo pymobiledevice3 remote tunneld >/tmp/ghostpin-tunneld.log 2>&1 &
+  # Let root own the redirect — the log may be a root-owned leftover from a
+  # previous (launchd) run, which the user shell couldn't truncate.
+  sudo sh -c 'pymobiledevice3 remote tunneld >/tmp/ghostpin-tunneld.log 2>&1' &
   STARTED_TUNNELD=1
 fi
 
