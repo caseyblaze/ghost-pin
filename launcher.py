@@ -20,23 +20,14 @@ def is_running(pattern):
     return result.returncode == 0
 
 
-TUNNELD_LABEL = "com.ghostpin.tunneld"
-TUNNELD_PLIST = f"/Library/LaunchDaemons/{TUNNELD_LABEL}.plist"
-
-
 def tunneld_state():
-    """Return one of: 'running', 'stopped', 'absent'.
+    """Return 'running' or 'stopped'.
 
-    The launcher runs as a normal user and cannot query launchd's system
-    domain (`launchctl print system/...` needs root). Instead detect the
-    live process with pgrep (works across users) and fall back to the
-    installed plist's existence to distinguish stopped vs never-installed.
+    tunneld is started on demand by start.sh and torn down when it exits,
+    so the launcher just reports whether the process is currently alive.
+    pgrep works across users (tunneld runs as root).
     """
-    if is_running("remote tunneld"):
-        return "running"
-    if os.path.exists(TUNNELD_PLIST):
-        return "stopped"
-    return "absent"
+    return "running" if is_running("remote tunneld") else "stopped"
 
 
 def _run_async(cmd):
@@ -99,13 +90,10 @@ class LauncherApp(tk.Tk):
         if not self.winfo_exists():
             return
 
-        state = tunneld_state()
-        if state == "running":
+        if tunneld_state() == "running":
             self.tunneld_status.config(text="● 運行中", fg=GREEN)
-        elif state == "stopped":
-            self.tunneld_status.config(text="● 已停止", fg=GRAY)
         else:
-            self.tunneld_status.config(text="● 未安裝（跑 install-tunneld.sh）", fg=GRAY)
+            self.tunneld_status.config(text="● 未啟動", fg=GRAY)
 
         if is_running("expo start"):
             self.dev_status.config(text="● 運行中", fg=GREEN)
