@@ -40,6 +40,6 @@ launchctl bootout system "$PLIST_DST" 2>/dev/null || true
 launchctl bootstrap system "$PLIST_DST"
 launchctl enable "system/$LABEL"
 
-echo "✓ tunneld LaunchDaemon 已安裝並啟動（$PMD3_BIN）"
-echo "  查看狀態： launchctl print system/$LABEL"
+echo "✓ tunneld LaunchDaemon 已安裝並啟動（${PMD3_BIN}）"
+echo "  查看狀態： launchctl print system/${LABEL}"
 echo "  查看日誌： tail -f /tmp/ghostpin-tunneld.log"
